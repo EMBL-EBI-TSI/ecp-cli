@@ -19,6 +19,7 @@ Resources are:
  - config
  - app
  - deployment
+ - logs
 
 Use the --file (-f) flag to pass json for the create action
 
@@ -30,4 +31,4 @@ Use the --file (-f) flag to pass json for the create action
 
 `ecp delete app myapp`
 
-`ecp get cred -t tokenfile.jwt`
+`ecp get logs TSI1310559760601 -t tokenfile.jwt`
