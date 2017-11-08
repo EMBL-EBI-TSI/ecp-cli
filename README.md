@@ -12,6 +12,7 @@ Actions are:
  - get
  - create
  - delete
+ - stop (deployments only)
 
 Resources are: 
  - cred

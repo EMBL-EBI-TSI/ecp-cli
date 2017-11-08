@@ -25,7 +25,7 @@ def geturl(res, name):
 
 def main(argv):
   parser = argparse.ArgumentParser(description='EBI CLoud Portal CLI')
-  parser.add_argument('verb', help='Action to perform on resource, one of get/create/delete')
+  parser.add_argument('verb', help='Action to perform on resource, one of get/create/delete/stop(deployments only)')
   parser.add_argument('resource', help='Resource type to perform action on, one of: cred/param/config/app/deployment/logs')
   parser.add_argument('name', nargs='?', help='Resource name to perform action on', default='')
   parser.add_argument('--file', '-f', help='File containing JSON to post')
@@ -54,6 +54,8 @@ def main(argv):
       r = requests.post(url, headers=headers, data = json_file.read())
   elif args.verb == 'delete':
     r = requests.delete(url, headers=headers)
+  elif args.verb == 'stop':
+    r = requests.put(url+'/stop', headers=headers)
   else:
     r = '{}'
     print('unknown verb, please run with --help for usage')
