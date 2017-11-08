@@ -18,13 +18,15 @@ def geturl(res, name):
     respath = '/application/'
   elif res == 'deployment':
     respath = '/deployment/'
+  elif res == 'logs':
+    return baseurl+'/deployment/'+name+'/logs'
 
   return baseurl+respath+name
 
 def main(argv):
   parser = argparse.ArgumentParser(description='EBI CLoud Portal CLI')
   parser.add_argument('verb', help='Action to perform on resource, one of get/create/delete')
-  parser.add_argument('resource', help='Resource type to perform action on, one of: cred/param/config/app/deployment')
+  parser.add_argument('resource', help='Resource type to perform action on, one of: cred/param/config/app/deployment/logs')
   parser.add_argument('name', nargs='?', help='Resource name to perform action on', default='')
   parser.add_argument('--file', '-f', help='File containing JSON to post')
   parser.add_argument('--token', '-t', help='File containing JWT identity token, is sourced from ECP_TOKEN env var by default')
