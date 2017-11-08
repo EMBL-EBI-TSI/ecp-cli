@@ -20,5 +20,7 @@ Resources are:
 
 Examples:
 `ecp get param`
+
 `ecp create config -f config.json`
+
 `ecp delete app myapp`
