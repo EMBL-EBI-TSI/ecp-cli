@@ -10,6 +10,7 @@ Actions are:
  - get
  - create
  - delete
+
 Resources are: 
  - cred
  - param
@@ -18,6 +19,6 @@ Resources are:
  - deployment
 
 Examples:
-ecp get param
-ecp create config -f config.json
-ecp delete app myapp
+`ecp get param`
+`ecp create config -f config.json`
+`ecp delete app myapp`
