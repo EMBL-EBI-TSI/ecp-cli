@@ -1,0 +1,66 @@
+#!/usr/bin/python
+
+import requests
+import sys
+import os
+import argparse
+import json
+
+def geturl(res, name):
+  baseurl = 'https://api.portal.tsi.ebi.ac.uk'
+  if res == 'cred':
+    respath = '/cloudproviderparameters/'
+  elif res == 'param':
+    respath = '/configuration/deploymentparameters/'
+  elif res == 'config':
+    respath = '/configuration/'
+  elif res == 'app':
+    respath = '/application/'
+  elif res == 'deployment':
+    respath = '/deployment/'
+
+  return baseurl+respath+name
+
+def main(argv):
+  parser = argparse.ArgumentParser(description='EBI CLoud Portal CLI')
+  parser.add_argument('verb', help='Action to perform on resource, one of get/create/delete')
+  parser.add_argument('resource', help='Resource type to perform action on, one of: cred/param/config/app/deployment')
+  parser.add_argument('name', nargs='?', help='Resource name to perform action on', default='')
+  parser.add_argument('--file', '-f', help='File containing JSON to post')
+  parser.add_argument('--token', '-t', help='File containing JWT identity token, is sourced from ECP_TOKEN env var by default')
+
+  args=parser.parse_args()
+
+  url = geturl(args.resource, args.name)
+  #print('Calling url: '+url)
+
+  if args.token is not None:
+    with open(args.token, 'r') as tokenfile:
+      token = tokenfile.read().replace('\n','')
+  elif "ECP_TOKEN" in os.environ:
+    token = os.environ["ECP_TOKEN"]
+  else:
+    token = ''
+
+  headers = {'Authorization': 'Bearer '+token, 'Content-Type': 'application/json'}
+  
+
+  if args.verb == 'get':
+    r = requests.get(url, headers=headers)
+  elif args.verb == 'create':
+    with open(args.file, 'r') as json_file:
+      r = requests.post(url, headers=headers, data = json_file.read())
+  elif args.verb == 'delete':
+    r = requests.delete(url, headers=headers)
+  else:
+    r = '{}'
+    print('unknown verb, please run with --help for usage')
+
+  try:
+    print(json.dumps(r.json(), indent=2))
+  except:
+    print("Could not decode Json, raw response:")
+    print(r.text)
+
+if __name__ == "__main__":
+  main(sys.argv)
