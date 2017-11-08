@@ -18,6 +18,8 @@ Resources are:
  - app
  - deployment
 
+Use the --file (-f) flag to pass json for the create action
+
 Examples:
 
 `ecp get param`
@@ -25,3 +27,5 @@ Examples:
 `ecp create config -f config.json`
 
 `ecp delete app myapp`
+
+`ecp get cred -t tokenfile.jwt`
