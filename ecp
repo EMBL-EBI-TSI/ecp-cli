@@ -1,10 +1,12 @@
 #!/usr/bin/python
 
+from __future__ import print_function
 import requests
 import sys
 import os
 import argparse
 import json
+import getpass
 
 def geturl(res, name):
   baseurl = 'https://api.portal.tsi.ebi.ac.uk'
@@ -26,14 +28,15 @@ def geturl(res, name):
 def main(argv):
   parser = argparse.ArgumentParser(description='EBI CLoud Portal CLI')
   parser.add_argument('verb', help='Action to perform on resource, one of get/create/delete/stop(deployments only)')
-  parser.add_argument('resource', help='Resource type to perform action on, one of: cred/param/config/app/deployment/logs')
+  parser.add_argument('resource', nargs='?', help='Resource type to perform action on, one of: cred/param/config/app/deployment/logs')
   parser.add_argument('name', nargs='?', help='Resource name to perform action on', default='')
   parser.add_argument('--file', '-f', help='File containing JSON to post')
   parser.add_argument('--token', '-t', help='File containing JWT identity token, is sourced from ECP_TOKEN env var by default')
 
   args=parser.parse_args()
 
-  url = geturl(args.resource, args.name)
+  if args.verb != 'login':
+    url = geturl(args.resource, args.name)
   #print('Calling url: '+url)
 
   if args.token is not None:
@@ -41,6 +44,9 @@ def main(argv):
       token = tokenfile.read().replace('\n','')
   elif "ECP_TOKEN" in os.environ:
     token = os.environ["ECP_TOKEN"]
+  elif os.path.isfile(os.environ['HOME']+'/.ecp_token'):
+    with open(os.environ['HOME']+'/.ecp_token', 'r') as tokenfile:
+      token = tokenfile.read().replace('\n','')
   else:
     token = ''
 
@@ -56,6 +62,14 @@ def main(argv):
     r = requests.delete(url, headers=headers)
   elif args.verb == 'stop':
     r = requests.put(url+'/stop', headers=headers)
+  elif args.verb == 'login':
+    user = raw_input('Please enter your username: ')
+    pw   = getpass.getpass(prompt = 'Please enter your password: ')
+    r = requests.get('https://api.aai.ebi.ac.uk/auth', auth=(user,pw))
+    with open(os.environ['HOME']+'/.ecp_token', 'w') as tokenfile:
+      print(r.text, file=tokenfile)
+    print('Logged in with token: '+r.text)
+    return
   else:
     r = '{}'
     print('unknown verb, please run with --help for usage')
