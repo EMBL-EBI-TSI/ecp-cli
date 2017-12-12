@@ -88,30 +88,18 @@ def geturl(res, name):
     respath = '/deployment/'
   elif res == 'logs':
     return baseurl+'/deployment/'+name+'/logs'
+  elif res == 'destroylogs':
+    return baseurl+'/deployment/'+name+'/destroylogs'
   elif res == 'status':
     return baseurl+'/deployment/'+name+'/status'
 
   try:
     return baseurl+respath+name
   except UnboundLocalError:
-    print('Unknown resource, use --help for usage', file=sys.stderr)
+    print('Unknown verb or resource, try --help for usage', file=sys.stderr)
 
-def main(argv):
-  parser = argparse.ArgumentParser(description='EBI CLoud Portal CLI')
-  parser.add_argument('verb', help='Action to perform on resource, one of get/create/delete/stop(deployments only)')
-  parser.add_argument('resource', nargs='?', help='Resource type to perform action on, one of: cred/param/config/app/deployment/logs')
-  parser.add_argument('name', nargs='?', help='Resource name to perform action on', default='')
-  parser.add_argument('--file', '-f', help='File containing JSON to post')
-  parser.add_argument('--token', '-t', help='File containing JWT identity token, is sourced from ECP_TOKEN env var by default')
-
-  args=parser.parse_args()
-
-  if args.verb != 'login':
-    url = geturl(args.resource, args.name)
-    if url is None:
-      return
-
-  if args.token is not None:
+def get_token(tokenfile):
+  if tokenfile is not None:
     with open(args.token, 'r') as tokenfile:
       token = tokenfile.read().replace('\n','')
   elif "ECP_TOKEN" in os.environ:
@@ -122,38 +110,72 @@ def main(argv):
   else:
     token = ''
 
-  headers = {'Authorization': 'Bearer '+token, 'Content-Type': 'application/json'}
-  
+  return token
 
-  if args.verb == 'get':
-    r = requests.get(url, headers=headers)
-  elif args.verb == 'create':
-    with open(args.file, 'r') as json_file:
-      r = requests.post(url, headers=headers, data = json_file.read())
-  elif args.verb == 'delete':
-    r = requests.delete(url, headers=headers)
-  elif args.verb == 'stop':
-    r = requests.put(url+'/stop', headers=headers)
-  elif args.verb == 'login':
+def make_request(url, verb, datafile, headers):
+  if verb == 'get':
+    response = requests.get(url, headers=headers)
+  elif verb == 'create':
+    with open(datafile, 'r') as json_file:
+      response = requests.post(url, headers=headers, data = json_file.read())
+  elif verb == 'delete':
+    response = requests.delete(url, headers=headers)
+  elif verb == 'stop':
+    response = requests.put(url+'/stop', headers=headers)
+  elif verb == 'login':
     user = raw_input('Please enter your username: ')
     pw   = getpass.getpass(prompt = 'Please enter your password: ')
-    r = requests.get('https://api.aai.ebi.ac.uk/auth', auth=(user,pw))
+    response = requests.get('https://api.aai.ebi.ac.uk/auth', auth=(user,pw))
     with open(os.environ['HOME']+'/.ecp_token', 'w') as tokenfile:
       print(r.text, file=tokenfile)
     print('Logged in with token: '+r.text)
-    return
+    response = '{}'
   else:
-    r = '{}'
-    print('unknown verb, please run with --help for usage')
+    response = '{}'
+    print('Unknown verb, try --help for usage')
 
-  if args.verb == 'get':
-    prettyprint(r.json(), args.resource, headers)
+  return response
+
+def print_request(response, verb, resource, headers, jsondump):
+  try:
+    r_json = response.json()
+  except:
+    if response.text.strip() != '':
+      print("Could not decode, raw response:")
+      print(response.text)
+    return
+
+  if jsondump:
+    print(json.dumps(r_json, indent=2))
+    return
+
+  if verb == 'get':
+    prettyprint(response.json(), resource, headers)
   else:
-    try:
-      print(json.dumps(r.json(), indent=2))
-    except:
-      print("Could not decode Json, raw response:")
-      print(r.text)
+    # fallback to yaml as it is more readable by humans
+    print(yaml.safe_dump(response.json(), indent=2, default_flow_style=False))
+  
+def main(argv):
+  parser = argparse.ArgumentParser(description='EBI CLoud Portal CLI')
+  parser.add_argument('verb', help='Action to perform on resource, one of: get/create/delete/stop(deployments only)/login')
+  parser.add_argument('resource', nargs='?', help='Resource type to perform action on, one of: cred/param/config/app/deployment/logs/status')
+  parser.add_argument('name', nargs='?', help='Resource name to perform action on; can be omitted for \'get\' action to list all', default='')
+  parser.add_argument('--file', '-f', help='File containing JSON to post')
+  parser.add_argument('--token', '-t', help='File containing JWT identity token, is sourced from ECP_TOKEN env var by default')
+  parser.add_argument('--json', '-j', help='Print raw JSON responses', action='store_true')
+
+  args=parser.parse_args()
+  token = get_token(args.token)
+
+  if args.verb != 'login':
+    url = geturl(args.resource, args.name)
+    # something went wrong, error is printed higher up so just exit
+    if url is None:
+      return
+
+  headers = {'Authorization': 'Bearer '+token, 'Content-Type': 'application/json'}
+  r = make_request(url, args.verb, args.file, headers)
+  print_request(r, args.verb, args.resource, headers, args.json)
 
 if __name__ == "__main__":
   main(sys.argv)
