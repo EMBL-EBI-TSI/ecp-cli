@@ -127,9 +127,7 @@ def make_request(url, verb, datafile, headers):
     pw   = getpass.getpass(prompt = 'Please enter your password: ')
     response = requests.get('https://api.aai.ebi.ac.uk/auth', auth=(user,pw))
     with open(os.environ['HOME']+'/.ecp_token', 'w') as tokenfile:
-      print(r.text, file=tokenfile)
-    print('Logged in with token: '+r.text)
-    response = '{}'
+      print(response.text, file=tokenfile)
   else:
     response = '{}'
     print('Unknown verb, try --help for usage')
@@ -140,9 +138,12 @@ def print_request(response, verb, resource, headers, jsondump):
   try:
     r_json = response.json()
   except:
-    if response.text.strip() != '':
-      print("Could not decode, raw response:")
+    #print("Could not decode, raw response:")
+    try:
       print(response.text)
+    except AttributeError:
+      print(response)
+      
     return
 
   if jsondump:
@@ -172,6 +173,8 @@ def main(argv):
     # something went wrong, error is printed higher up so just exit
     if url is None:
       return
+  else:
+    url = ''
 
   headers = {'Authorization': 'Bearer '+token, 'Content-Type': 'application/json'}
   r = make_request(url, args.verb, args.file, headers)
