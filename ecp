@@ -7,23 +7,92 @@ import os
 import argparse
 import json
 import getpass
+import datetime
+
+def prettyprint(resp, res, headers):
+  table = []
+  if res == 'deployment' or res == 'deployments':
+    if '_embedded' in resp:
+      table.append(['REFERENCE','APP NAME', 'STARTED', 'STATUS'])
+      for depl in resp['_embedded']['deploymentResourceList']:
+        ts = depl['startedTime'] / 1000.0
+        start_t = datetime.datetime.fromtimestamp(ts).strftime('%H:%M %d-%m-%Y')
+      
+        status_r = requests.get(depl['_links']['status']['href'], headers=headers).json()
+        try:
+          status = status_r['status']
+        except:
+          status = 'Error getting status'
+
+        table.append([depl['reference'], depl['applicationName'], start_t, status])
+
+  if res == 'app' or res == 'apps':
+    if '_embedded' in resp:
+      table.append(['NAME', 'VERSION'])
+      for app in resp['_embedded']['applicationResourceList']:
+        table.append([app['name'], app['version']])
+
+  if res == 'config' or res == 'configs':
+    if '_embedded' in resp:
+      for config in resp['_embedded']['configurationResourceList']:
+        print('- '+config['name']+':')
+        print('    Cloud provider parameters: '+config['cloudProviderParametersName'])
+        print('    SSH Public Key: '+config['sshKey'])
+        print('    Parameters: '+config['deploymentParametersName'])
+      return
+
+  if res == 'cred' or res == 'creds':
+    if '_embedded' in resp:
+      for cred in resp['_embedded']['cloudProviderParametersResourceList']:
+        print('- '+cred['name']+':')
+        print('    Provider: '+cred['cloudProvider'])
+        print('    Parameters: ')
+        for field in cred['fields']:
+          print('    * '+field['key']+': '+field['value'])
+      return
+
+  if res == 'param' or res == 'params':
+    if '_embedded' in resp:
+      for param in resp['_embedded']['configurationDeploymentParametersResourceList']:
+        print('- '+param['name']+':')
+        print('    Parameters: ')
+        for field in param['fields']:
+          print('    * '+field['key']+': '+field['value'])
+      return
+
+  if len(table) > 0:
+    print_table(table)
+  else:
+    print(json.dumps(resp, indent=2))
+        
+def print_table(table):
+  col_width = max([max(len(str(x)) for x in col) for col in zip(*table)]) + 2
+  # assuming square table, can take length of first row
+  row_format = len(table[0]) * '{:<{fill}}'    
+  for row in table:
+    print(row_format.format(*row, fill=col_width))
 
 def geturl(res, name):
   baseurl = 'https://api.portal.tsi.ebi.ac.uk'
-  if res == 'cred':
+  if res == 'cred' or res == 'creds':
     respath = '/cloudproviderparameters/'
-  elif res == 'param':
+  elif res == 'param' or res == 'params':
     respath = '/configuration/deploymentparameters/'
-  elif res == 'config':
+  elif res == 'config' or res == 'configs':
     respath = '/configuration/'
-  elif res == 'app':
+  elif res == 'app' or res == 'apps':
     respath = '/application/'
-  elif res == 'deployment':
+  elif res == 'deployment' or res == 'deployments':
     respath = '/deployment/'
   elif res == 'logs':
     return baseurl+'/deployment/'+name+'/logs'
+  elif res == 'status':
+    return baseurl+'/deployment/'+name+'/status'
 
-  return baseurl+respath+name
+  try:
+    return baseurl+respath+name
+  except UnboundLocalError:
+    print('Unknown resource, use --help for usage', file=sys.stderr)
 
 def main(argv):
   parser = argparse.ArgumentParser(description='EBI CLoud Portal CLI')
@@ -37,6 +106,9 @@ def main(argv):
 
   if args.verb != 'login':
     url = geturl(args.resource, args.name)
+
+  if url is None:
+    return
   #print('Calling url: '+url)
 
   if args.token is not None:
@@ -74,11 +146,14 @@ def main(argv):
     r = '{}'
     print('unknown verb, please run with --help for usage')
 
-  try:
-    print(json.dumps(r.json(), indent=2))
-  except:
-    print("Could not decode Json, raw response:")
-    print(r.text)
+  if args.verb == 'get':
+    prettyprint(r.json(), args.resource, headers)
+  else:
+    try:
+      print(json.dumps(r.json(), indent=2))
+    except:
+      print("Could not decode Json, raw response:")
+      print(r.text)
 
 if __name__ == "__main__":
   main(sys.argv)
