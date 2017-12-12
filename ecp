@@ -8,6 +8,7 @@ import argparse
 import json
 import getpass
 import datetime
+import yaml
 
 def prettyprint(resp, res, headers):
   table = []
@@ -63,7 +64,8 @@ def prettyprint(resp, res, headers):
   if len(table) > 0:
     print_table(table)
   else:
-    print(json.dumps(resp, indent=2))
+    # For individual requests, dump to yaml which is better readable
+    print(yaml.safe_dump(resp, indent=2, default_flow_style=False))
         
 def print_table(table):
   col_width = max([max(len(str(x)) for x in col) for col in zip(*table)]) + 2
@@ -106,10 +108,8 @@ def main(argv):
 
   if args.verb != 'login':
     url = geturl(args.resource, args.name)
-
-  if url is None:
-    return
-  #print('Calling url: '+url)
+    if url is None:
+      return
 
   if args.token is not None:
     with open(args.token, 'r') as tokenfile:
