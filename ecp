@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 from __future__ import print_function
 import requests
@@ -16,8 +16,11 @@ def prettyprint(resp, res, headers):
     if '_embedded' in resp:
       table.append(['REFERENCE','APP NAME', 'STARTED', 'STATUS'])
       for depl in resp['_embedded']['deploymentResourceList']:
-        ts = depl['startedTime'] / 1000.0
-        start_t = datetime.datetime.fromtimestamp(ts).strftime('%H:%M %d-%m-%Y')
+        if 'startedTime' in depl:
+          ts = depl['startedTime'] / 1000.0
+          start_t = datetime.datetime.fromtimestamp(ts).strftime('%H:%M %d-%m-%Y')
+        else:
+          start_t = ''
       
         status_r = requests.get(depl['_links']['status']['href'], headers=headers).json()
         try:
@@ -123,7 +126,7 @@ def make_request(url, verb, datafile, headers):
   elif verb == 'stop':
     response = requests.put(url+'/stop', headers=headers)
   elif verb == 'login':
-    user = raw_input('Please enter your username: ')
+    user = input('Please enter your username: ')
     pw   = getpass.getpass(prompt = 'Please enter your password: ')
     response = requests.get('https://api.aai.ebi.ac.uk/auth', auth=(user,pw))
     with open(os.environ['HOME']+'/.ecp_token', 'w') as tokenfile:
