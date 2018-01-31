@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/local/bin/python3
 
 from __future__ import print_function
 import requests
@@ -16,9 +16,12 @@ def prettyprint(resp, res, headers):
     if '_embedded' in resp:
       table.append(['REFERENCE','APP NAME', 'STARTED', 'STATUS'])
       for depl in resp['_embedded']['deploymentResourceList']:
-        ts = depl['startedTime'] / 1000.0
+        try:
+          ts = depl['startedTime'] / 1000.0
+        except TypeError:
+          ts = 0
+          
         start_t = datetime.datetime.fromtimestamp(ts).strftime('%H:%M %d-%m-%Y')
-      
         status_r = requests.get(depl['_links']['status']['href'], headers=headers).json()
         try:
           status = status_r['status']
@@ -66,11 +69,11 @@ def prettyprint(resp, res, headers):
   else:
     # For individual requests, dump to yaml which is better readable
     print(yaml.safe_dump(resp, indent=2, default_flow_style=False))
-        
+
 def print_table(table):
   col_width = max([max(len(str(x)) for x in col) for col in zip(*table)]) + 2
   # assuming square table, can take length of first row
-  row_format = len(table[0]) * '{:<{fill}}'    
+  row_format = len(table[0]) * '{:<{fill}}'
   for row in table:
     print(row_format.format(*row, fill=col_width))
 
@@ -143,7 +146,7 @@ def print_request(response, verb, resource, headers, jsondump):
       print(response.text)
     except AttributeError:
       print(response)
-      
+
     return
 
   if jsondump:
@@ -155,7 +158,7 @@ def print_request(response, verb, resource, headers, jsondump):
   else:
     # fallback to yaml as it is more readable by humans
     print(yaml.safe_dump(response.json(), indent=2, default_flow_style=False))
-  
+
 def main(argv):
   parser = argparse.ArgumentParser(description='EBI CLoud Portal CLI')
   parser.add_argument('verb', help='Action to perform on resource, one of: get/create/delete/stop(deployments only)/login')
