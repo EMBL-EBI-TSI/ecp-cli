@@ -27,7 +27,10 @@ class ECP:
     self.token = response.text
     self.headers = {'Authorization': 'Bearer '+self.token, 'Content-Type': 'application/json'}
 
-    return response.text
+    if response.status_code == '201':
+      return 'Authorized: 200 OK'
+    else 
+      return 'Something went wrong, got status: '+response.status_code
 
   def get_depl_status(self, depl):
     return requests.get(depl['_links']['status']['href'], headers=self.headers).json()
