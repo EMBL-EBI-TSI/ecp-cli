@@ -29,7 +29,7 @@ class ECP:
 
     if response.status_code == '201':
       return 'Authorized: 200 OK'
-    else 
+    else:
       return 'Something went wrong, got status: '+response.status_code
 
   def get_depl_status(self, depl):
@@ -165,8 +165,10 @@ class ECP:
     except:
       #print("Could not decode, raw response:")
       try:
+        print('Status '+str(response.status_code)+' '+requests.status_codes._codes[response.status_code][0])
         print(response.text)
       except AttributeError:
+        print('printing raw response')
         print(response)
         
       return
