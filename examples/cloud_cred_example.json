@@ -1,0 +1,12 @@
+{
+  "name": "Example Cloud Provider",
+  "cloudProvider": "OSTACK",
+  "fields": [
+    { "key": "OS_AUTH_URL", "value": "https://example.com" },
+    { "key": "OS_USERNAME", "value": "example" },
+    { "key": "OS_PASSWORD", "value": "example" },
+    { "key": "OS_REGION_NAME", "value": "region" },
+    { "key": "OS_TENANT_NAME", "value": "example_tenant" },
+    { "key": "OS_TENANT_ID", "value": "example_uuid" }
+  ]
+}

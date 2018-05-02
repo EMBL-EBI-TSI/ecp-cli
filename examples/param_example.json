@@ -1,0 +1,7 @@
+{
+  "name": "Example Deployment Parameters",
+  "fields": [
+    { "key": "parameter_1", "value": "2" },
+    { "key": "parameter_2", "value": "example" }
+  ]
+}

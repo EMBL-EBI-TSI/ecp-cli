@@ -1,0 +1,8 @@
+{
+  "name": "Example Configuration",
+  "cloudProviderParametersName": "your cloud provider config name",
+  "deploymentParametersName": "your deployment parameters name",
+  "sshKey": "ssh-rsa AAAA...your key here.... you@example.com",
+  "softUsageLimit": "",
+  "hardUsageLimit": ""
+}
