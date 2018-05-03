@@ -1,0 +1,14 @@
+{
+  "applicationName": "Example application",
+  "applicationAccountUsername"  : "your-usr-uuid",
+  "configurationAccountUsername": "your-usr-uuid",
+  "attachedVolumes": [],
+  "assignedInputs": [
+    {
+      "inputName": "input_1",
+      "assignedValue": "some_value"
+    }
+  ],
+  "assignedParameters": [],
+  "configurationName": "your_configuration"
+}
