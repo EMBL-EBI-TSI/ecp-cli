@@ -144,6 +144,8 @@ class ECP:
     self.headers = {'Authorization': 'Bearer '+token, 'Content-Type': 'application/json'}
 
   def make_request(self, verb, resource, name, data=''):
+    if verb == 'create':
+      name = ''
     url = self.get_url(resource, name)
     if verb == 'get':
       response = requests.get(url, headers=self.headers)
@@ -205,12 +207,22 @@ def main(argv):
   else:
     data = ''
 
+  # convenience method
+  # try name arg as file for create action if -f not given
+  if args.verb == 'create'and args.file is None:
+    try:
+      datafh = open(args.name, 'r')
+      data = datafh.read()
+      datafh.close()
+    except:
+      print('Error: \'create\' action requires JSON input data (-f)')
+
   if args.verb == 'login':
     print(e.login(args.user, args.password), file=sys.stderr)
     return
 
   verbs = ['get','create','delete','stop','login']
-  resources = ['cred', 'creds', 'param','params','config','configs','app','apps','deployment','deployments','logs','status']
+  resources = ['cred', 'creds', 'param','params','config','configs','app','apps','deployment','deployments','logs','destroylogs', 'status']
   if not args.verb in verbs:
     print('Unknown verb \''+args.verb+'\', expecting one of: get, create, delete, stop, login', file=sys.stderr)
     return
@@ -221,7 +233,7 @@ def main(argv):
     args.resource = 'deployment'
 
   if not args.resource in resources:
-    print('Unknown resource \''+args.resource+'\', expecting one of: cred(s), param(s), config(s), app(s), deployment(s), logs, status', file=sys.stderr)
+    print('Unknown resource \''+args.resource+'\', expecting one of: cred[s], param[s], config[s], app[s], deployment[s], [destroy]logs, status', file=sys.stderr)
     return
 
   r = e.make_request(args.verb, args.resource, args.name, data=data)
