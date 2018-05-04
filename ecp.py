@@ -213,7 +213,7 @@ def main(argv):
   parser.add_argument('--token', '-t', help='File containing JWT identity token, is sourced from ECP_TOKEN env var by default')
   parser.add_argument('--json', '-j', help='Print raw JSON responses', action='store_true')
 
-  arggroup = parser.add_argument_group('login', 'Login arguments:')
+  arggroup = parser.add_argument_group('login', 'Arguments for \'login\' verb:')
   arggroup.add_argument('--user', '-u', help='Username for local login action (implies -l)', default='')
   arggroup.add_argument('--password', '-p', help='Password for local login action (implies -l)', default='')
   arggroup.add_argument('--local', '-l', help='Use ecp local login', action='store_true')
