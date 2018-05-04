@@ -15,6 +15,26 @@ class ECP:
     self.get_token(tokenfile)
 
   # gets new token from portal
+  def aaplogin(self):
+    print('Please visit https://api.aai.ebi.ac.uk/sso and follow the login instructions')
+    logged_in = False
+    while not logged_in:
+      token = input('Please enter the token received here: ')
+      self.set_token(token)
+      r = self.make_request('get', 'deployment', '')
+      if r.status_code == 401:
+        print('Got 401 unauthorized while using token, please verify your token and try again')
+      else:
+        print('Login successful!')
+        logged_in = True
+      
+    with open(os.environ['HOME']+'/.ecp_token', 'w') as tokenfile:
+      print(token, file=tokenfile)
+    
+  def set_token(self, token):
+    self.token = token
+    self.headers = {'Authorization': 'Bearer '+self.token, 'Content-Type': 'application/json'}
+
   def login(self, user='', pw=''):
     if user == '':
       user = input('Please enter your username: ')
@@ -24,13 +44,12 @@ class ECP:
     with open(os.environ['HOME']+'/.ecp_token', 'w') as tokenfile:
       print(response.text, file=tokenfile)
 
-    self.token = response.text
-    self.headers = {'Authorization': 'Bearer '+self.token, 'Content-Type': 'application/json'}
+    self.set_token(response.text)
 
-    if response.status_code == '201':
+    if response.status_code == 200:
       return 'Authorized: 200 OK'
     else:
-      return 'Something went wrong, got status: '+response.status_code
+      return 'Login details incorrect, got status: '+str(response.status_code)
 
   def get_depl_status(self, depl):
     return requests.get(depl['_links']['status']['href'], headers=self.headers).json()
@@ -193,8 +212,11 @@ def main(argv):
   parser.add_argument('--file', '-f', help='File containing JSON to post')
   parser.add_argument('--token', '-t', help='File containing JWT identity token, is sourced from ECP_TOKEN env var by default')
   parser.add_argument('--json', '-j', help='Print raw JSON responses', action='store_true')
-  parser.add_argument('--user', '-u', help='Username for login action', default='')
-  parser.add_argument('--password', '-p', help='Password for login action', default='')
+
+  arggroup = parser.add_argument_group('login', 'Login arguments:')
+  arggroup.add_argument('--user', '-u', help='Username for local login action (implies -l)', default='')
+  arggroup.add_argument('--password', '-p', help='Password for local login action (implies -l)', default='')
+  arggroup.add_argument('--local', '-l', help='Use ecp local login', action='store_true')
 
   args=parser.parse_args()
 
@@ -218,8 +240,12 @@ def main(argv):
       print('Error: \'create\' action requires JSON input data (-f)')
 
   if args.verb == 'login':
-    print(e.login(args.user, args.password), file=sys.stderr)
-    return
+    if args.local or args.user != '' or args.password != '':
+      print(e.login(args.user, args.password), file=sys.stderr)
+      return
+    else:
+      e.aaplogin()
+      return
 
   verbs = ['get','create','delete','stop','login']
   resources = ['cred', 'creds', 'param','params','config','configs','app','apps','deployment','deployments','logs','destroylogs', 'status']
@@ -237,6 +263,9 @@ def main(argv):
     return
 
   r = e.make_request(args.verb, args.resource, args.name, data=data)
+  if r.status_code == 401:
+    print('Got 401 unauthorized, please run \'ecp login\' to log in.')
+    return
   e.print_request(r, args.verb, args.resource, args.json)
 
 if __name__ == "__main__":
