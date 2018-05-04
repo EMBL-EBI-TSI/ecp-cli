@@ -41,9 +41,9 @@ Create a cloud configuration described in config.json:
 
 `ecp create config -f config.json`
 
-Delete the app name 'myapp':
+Delete the app named 'My App':
 
-`ecp delete app myapp`
+`ecp delete app 'My App'`
 
 Get logs for deployment TSI1310559760601 using a custom tokenfile:
 
