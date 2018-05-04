@@ -41,7 +41,7 @@ Create a cloud configuration described in config.json:
 
 `ecp create config -f config.json`
 
-Delete the app name 'My App':
+Delete the app named 'My App':
 
 `ecp delete app 'My App'`
 
