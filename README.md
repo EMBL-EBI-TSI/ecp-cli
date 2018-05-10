@@ -39,7 +39,7 @@ List all parameters available:
 
 `ecp get params`
 
-Create a cloud configuration described in config.json:
+Create a cloud configuration described in config_example.json:
 
 `ecp create config -f examples/config_example.json`
 
