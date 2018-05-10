@@ -41,7 +41,7 @@ List all parameters available:
 
 Create a cloud configuration described in config.json:
 
-`ecp create config -f config.json`
+`ecp create config -f examples/config_example.json`
 
 Delete the app named 'My App':
 
