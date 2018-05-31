@@ -209,7 +209,7 @@ def main(argv):
   parser.add_argument('verb', help='Action to perform on resource, one of: get/create/delete/stop(deployments only)/login')
   parser.add_argument('resource', nargs='?', help='Resource type to perform action on, one of: cred/param/config/app/deployment/logs/status')
   parser.add_argument('name', nargs='?', help='Resource name to perform action on; can be omitted for \'get\' action to list all', default='')
-  parser.add_argument('--file', '-f', help='File containing JSON to post')
+  parser.add_argument('--file', '-f', help='File containing JSON to post, use - for stdin')
   parser.add_argument('--token', '-t', help='File containing JWT identity token, is sourced from ECP_TOKEN env var by default')
   parser.add_argument('--json', '-j', help='Print raw JSON responses', action='store_true')
   parser.add_argument('--dev', '-d', help='use dev portal url, https://dev.portal.tsi.ebi.ac.uk', action='store_true')
@@ -228,7 +228,10 @@ def main(argv):
   e = ECP(baseurl=baseurl)
 
   if args.file is not None:
-    datafh = open(args.file, 'r')
+    if args.file == '-':
+      datafh = sys.stdin
+    else: 
+      datafh = open(args.file, 'r')
     data = datafh.read()
     datafh.close()
   else:
