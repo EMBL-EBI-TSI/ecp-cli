@@ -11,7 +11,7 @@ import datetime
 import yaml
 
 class ECP:
-  def __init__(self, tokenfile=None):
+  def __init__(self, tokenfile=None, baseurl='https://api.portal.tsi.ebi.ac.uk'):
     self.get_token(tokenfile)
 
   # gets new token from portal
@@ -122,8 +122,7 @@ class ECP:
     for row in table:
       print(row_format.format(*row, fill=col_width))
 
-  def get_url(self, resource, name):
-    baseurl = 'https://api.portal.tsi.ebi.ac.uk'
+  def get_url(self, resource, name, baseurl):
     if resource == 'cred' or resource == 'creds':
       resourcepath = '/cloudproviderparameters/'
     elif resource == 'param' or resource == 'params':
@@ -162,10 +161,10 @@ class ECP:
     self.token = token
     self.headers = {'Authorization': 'Bearer '+token, 'Content-Type': 'application/json'}
 
-  def make_request(self, verb, resource, name, data=''):
+  def make_request(self, verb, resource, name, data='', baseurl='https://api.portal.tsi.ebi.ac.uk'):
     if verb == 'create':
       name = ''
-    url = self.get_url(resource, name)
+    url = self.get_url(resource, name, baseurl)
     if verb == 'get':
       response = requests.get(url, headers=self.headers)
     elif verb == 'create':
@@ -212,6 +211,7 @@ def main(argv):
   parser.add_argument('--file', '-f', help='File containing JSON to post')
   parser.add_argument('--token', '-t', help='File containing JWT identity token, is sourced from ECP_TOKEN env var by default')
   parser.add_argument('--json', '-j', help='Print raw JSON responses', action='store_true')
+  parser.add_argument('--dev', '-d', help='use dev portal url, https://dev.portal.tsi.ebi.ac.uk', action='store_true')
 
   arggroup = parser.add_argument_group('login', 'Arguments for \'login\' verb:')
   arggroup.add_argument('--user', '-u', help='Username for local login action (implies -l)', default='')
@@ -262,7 +262,11 @@ def main(argv):
     print('Unknown resource \''+args.resource+'\', expecting one of: cred[s], param[s], config[s], app[s], deployment[s], [destroy]logs, status', file=sys.stderr)
     return
 
-  r = e.make_request(args.verb, args.resource, args.name, data=data)
+  baseurl = 'https://api.portal.tsi.ebi.ac.uk'
+  if args.dev:
+    baseurl = 'https://dev.api.portal.tsi.ebi.ac.uk'
+
+  r = e.make_request(args.verb, args.resource, args.name, data=data, baseurl=baseurl)
   if r.status_code == 401:
     print('Got 401 unauthorized, please run \'ecp login\' to log in.')
     return
