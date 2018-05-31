@@ -13,6 +13,7 @@ import yaml
 class ECP:
   def __init__(self, tokenfile=None, baseurl='https://api.portal.tsi.ebi.ac.uk'):
     self.get_token(tokenfile)
+    self.baseurl = baseurl
 
   # gets new token from portal
   def aaplogin(self):
@@ -122,7 +123,7 @@ class ECP:
     for row in table:
       print(row_format.format(*row, fill=col_width))
 
-  def get_url(self, resource, name, baseurl):
+  def get_url(self, resource, name):
     if resource == 'cred' or resource == 'creds':
       resourcepath = '/cloudproviderparameters/'
     elif resource == 'param' or resource == 'params':
@@ -134,14 +135,14 @@ class ECP:
     elif resource == 'deployment' or resource == 'deployments':
       resourcepath = '/deployment/'
     elif resource == 'logs':
-      return baseurl+'/deployment/'+name+'/logs'
+      return self.baseurl+'/deployment/'+name+'/logs'
     elif resource == 'destroylogs':
-      return baseurl+'/deployment/'+name+'/destroylogs'
+      return self.baseurl+'/deployment/'+name+'/destroylogs'
     elif resource == 'status':
-      return baseurl+'/deployment/'+name+'/status'
+      return self.baseurl+'/deployment/'+name+'/status'
 
     try:
-      return baseurl+resourcepath+name
+      return self.baseurl+resourcepath+name
     except UnboundLocalError:
       print('Unknown verb or resource, try --help for usage', file=sys.stderr)
 
@@ -161,10 +162,10 @@ class ECP:
     self.token = token
     self.headers = {'Authorization': 'Bearer '+token, 'Content-Type': 'application/json'}
 
-  def make_request(self, verb, resource, name, data='', baseurl='https://api.portal.tsi.ebi.ac.uk'):
+  def make_request(self, verb, resource, name, data=''):
     if verb == 'create':
       name = ''
-    url = self.get_url(resource, name, baseurl)
+    url = self.get_url(resource, name)
     if verb == 'get':
       response = requests.get(url, headers=self.headers)
     elif verb == 'create':
@@ -220,7 +221,11 @@ def main(argv):
 
   args=parser.parse_args()
 
-  e = ECP()
+  baseurl = 'https://api.portal.tsi.ebi.ac.uk'
+  if args.dev:
+    baseurl = 'https://dev.api.portal.tsi.ebi.ac.uk'
+
+  e = ECP(baseurl=baseurl)
 
   if args.file is not None:
     datafh = open(args.file, 'r')
@@ -262,11 +267,8 @@ def main(argv):
     print('Unknown resource \''+args.resource+'\', expecting one of: cred[s], param[s], config[s], app[s], deployment[s], [destroy]logs, status', file=sys.stderr)
     return
 
-  baseurl = 'https://api.portal.tsi.ebi.ac.uk'
-  if args.dev:
-    baseurl = 'https://dev.api.portal.tsi.ebi.ac.uk'
 
-  r = e.make_request(args.verb, args.resource, args.name, data=data, baseurl=baseurl)
+  r = e.make_request(args.verb, args.resource, args.name, data=data)
   if r.status_code == 401:
     print('Got 401 unauthorized, please run \'ecp login\' to log in.')
     return
