@@ -28,10 +28,16 @@ class ECP:
       else:
         print('Login successful!')
         logged_in = True
-      
+
     with open(os.environ['HOME']+'/.ecp_token', 'w') as tokenfile:
       print(token, file=tokenfile)
-    
+
+  def delete_token(self):
+    try:
+      os.remove(os.environ['HOME']+'/.ecp_token')
+    except OSError as err:
+      print ("Error: %s - %s." % (err.filename, err.strerror))
+
   def set_token(self, token):
     self.token = token
     self.headers = {'Authorization': 'Bearer '+self.token, 'Content-Type': 'application/json'}
@@ -67,7 +73,7 @@ class ECP:
             start_t = datetime.datetime.fromtimestamp(ts).strftime('%H:%M %d-%m-%Y')
           else:
             start_t = ''
-        
+
           status_r = self.get_depl_status(depl)
           try:
             status = status_r['status']
@@ -115,11 +121,11 @@ class ECP:
     else:
       # For individual requests, dump to yaml which is better readable
       print(yaml.safe_dump(resp, indent=2, default_flow_style=False))
-          
+
   def print_table(self, table):
     col_width = max([max(len(str(x)) for x in col) for col in zip(*table)]) + 2
     # assuming square table, can take length of first row
-    row_format = len(table[0]) * '{:<{fill}}'    
+    row_format = len(table[0]) * '{:<{fill}}'
     for row in table:
       print(row_format.format(*row, fill=col_width))
 
@@ -191,7 +197,7 @@ class ECP:
       except AttributeError:
         print('printing raw response')
         print(response)
-        
+
       return
 
     if jsondump:
@@ -203,7 +209,7 @@ class ECP:
     else:
       # fallback to yaml as it is more readable by humans
       print(yaml.safe_dump(response.json(), indent=2, default_flow_style=False))
-  
+
 def main(argv):
   parser = argparse.ArgumentParser(description='EBI CLoud Portal CLI')
   parser.add_argument('verb', help='Action to perform on resource, one of: get/create/delete/stop(deployments only)/login')
@@ -218,6 +224,7 @@ def main(argv):
   arggroup.add_argument('--user', '-u', help='Username for local login action (implies -l)', default='')
   arggroup.add_argument('--password', '-p', help='Password for local login action (implies -l)', default='')
   arggroup.add_argument('--local', '-l', help='Use ecp local login', action='store_true')
+  arggroup.add_argument('--remove', '-r', help="Delete local token", action='store_true')
 
   args=parser.parse_args()
 
@@ -230,7 +237,7 @@ def main(argv):
   if args.file is not None:
     if args.file == '-':
       datafh = sys.stdin
-    else: 
+    else:
       datafh = open(args.file, 'r')
     data = datafh.read()
     datafh.close()
@@ -248,6 +255,9 @@ def main(argv):
       print('Error: \'create\' action requires JSON input data (-f)')
 
   if args.verb == 'login':
+    if args.remove:
+      e.delete_token()
+      return
     if args.local or args.user != '' or args.password != '':
       print(e.login(args.user, args.password), file=sys.stderr)
       return
