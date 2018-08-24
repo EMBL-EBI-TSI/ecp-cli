@@ -30,6 +30,10 @@ class ECP:
           print('Login successful!')
           logged_in = True
     except KeyboardInterrupt:
+      print ('\nNote: On the standard OSX terminal pasting the token might'
+             ' hang the process.'
+             '\nIf that happens, copy your token to the clipboard and run:'
+             '\npbpaste | ecp login\n')
       sys.exit(0)
     with open(os.environ['HOME']+'/.ecp_token', 'w') as tokenfile:
       print(token, file=tokenfile)
