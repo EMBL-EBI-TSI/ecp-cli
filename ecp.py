@@ -19,16 +19,18 @@ class ECP:
   def aaplogin(self):
     print('Please visit https://api.aai.ebi.ac.uk/sso and follow the login instructions')
     logged_in = False
-    while not logged_in:
-      token = input('Please enter the token received here: ')
-      self.set_token(token)
-      r = self.make_request('get', 'deployment', '')
-      if r.status_code == 401:
-        print('Got 401 unauthorized while using token, please verify your token and try again')
-      else:
-        print('Login successful!')
-        logged_in = True
-
+    try:
+      while not logged_in:
+        token = input('Please enter the token received here: ')
+        self.set_token(token)
+        r = self.make_request('get', 'deployment', '')
+        if r.status_code == 401:
+          print('Got 401 unauthorized while using token, please verify your token and try again')
+        else:
+          print('Login successful!')
+          logged_in = True
+    except KeyboardInterrupt:
+      sys.exit(0)
     with open(os.environ['HOME']+'/.ecp_token', 'w') as tokenfile:
       print(token, file=tokenfile)
 
