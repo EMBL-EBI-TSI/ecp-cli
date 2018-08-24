@@ -150,7 +150,7 @@ class ECP:
       return self.baseurl+'/deployment/'+name+'/status'
 
     try:
-      return self.baseurl+resourcepath+name
+      return self.baseurl+resourcepath+str(name)
     except UnboundLocalError:
       print('Unknown verb or resource, try --help for usage', file=sys.stderr)
 
