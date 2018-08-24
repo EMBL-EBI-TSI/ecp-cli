@@ -279,7 +279,7 @@ def main(argv):
     args.resource = 'deployment'
 
   if not args.resource in resources:
-    print('Unknown resource \''+args.resource+'\', expecting one of: cred[s], param[s], config[s], app[s], deployment[s], [destroy]logs, status', file=sys.stderr)
+    print('Unknown resource \''+str(args.resource)+'\', expecting one of: cred[s], param[s], config[s], app[s], deployment[s], [destroy]logs, status', file=sys.stderr)
     return
 
 
