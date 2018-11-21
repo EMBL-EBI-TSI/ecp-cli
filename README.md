@@ -10,6 +10,11 @@ If you want to use a token from a different source,
 stick it in a file and use the `--token` (`-t`) flag to pass it. 
 Or export it to the `ECP_TOKEN` environment variable.
 
+## Side notes for Mac OS X
+
+#. The `python3` is required. Installed it with `brew install python` if needed. It is a good idea to keep the default version unchanged.
+#. Modules `requests` and `yaml` are not installed by default. Run `sudo pip3 install requests` and `sudo pip3 install pyyaml` as necessary.
+
 ## Synopsis
 
 Main commands are run as `ecp *action* *resource* [*name*]`. Leave out the name for `get` actions to get the full list of that resource.
