@@ -10,6 +10,10 @@ setup(
       author=' Gianni Dalla Torre',
       author_email='',
       license='Apache License 2.0',
-      packages=['.'],
+	  install_requires=[
+		'requests','pyyaml'
+      ],
+      packages=[''],
+	  python_requires='>=3.6',
       zip_safe=False
 	  )
