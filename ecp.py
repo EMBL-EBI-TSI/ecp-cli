@@ -103,6 +103,15 @@ class ECP:
           print('    Parameters: '+config['deploymentParametersName'])
         return
 
+    if res == 'sharedConfig' or res == 'sharedConfigs':
+      if '_embedded' in resp:
+        for config in resp['_embedded']['configurationResourceList']:
+          print('- '+config['name']+':')
+          print('    Cloud provider parameters: '+config['cloudProviderParametersName'])
+          print('    Cloud Provider: '+config['cloudProviderType'])
+          print('    Parameters: '+config['deploymentParametersName'])
+        return
+
     if res == 'cred' or res == 'creds':
       if '_embedded' in resp:
         for cred in resp['_embedded']['cloudProviderParametersResourceList']:
@@ -142,6 +151,8 @@ class ECP:
       resourcepath = '/configuration/deploymentparameters/'
     elif resource == 'config' or resource == 'configs':
       resourcepath = '/configuration/'
+    elif resource == 'sharedConfig' or resource == 'sharedConfig':
+      resourcepath = '/configuration/shared'
     elif resource == 'app' or resource == 'apps':
       resourcepath = '/application/'
     elif resource == 'deployment' or resource == 'deployments':
