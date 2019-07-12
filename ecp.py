@@ -48,6 +48,9 @@ class ECP:
     self.token = token
     self.headers = {'Authorization': 'Bearer '+self.token, 'Content-Type': 'application/json'}
 
+  def get_session_token(self):
+    return self.token
+
   def login(self, user='', pw=''):
     if user == '':
       user = input('Please enter your username: ')
@@ -103,7 +106,7 @@ class ECP:
           print('    Parameters: '+config['deploymentParametersName'])
         return
 
-    if res == 'sharedConfig' or res == 'sharedConfigs':
+    if res == 'sharedconfig' or res == 'sharedconfig':
       if '_embedded' in resp:
         for config in resp['_embedded']['configurationResourceList']:
           print('- '+config['name']+':')
@@ -151,7 +154,7 @@ class ECP:
       resourcepath = '/configuration/deploymentparameters/'
     elif resource == 'config' or resource == 'configs':
       resourcepath = '/configuration/'
-    elif resource == 'sharedConfig' or resource == 'sharedConfig':
+    elif resource == 'sharedconfig' or resource == 'sharedconfig':
       resourcepath = '/configuration/shared'
     elif resource == 'app' or resource == 'apps':
       resourcepath = '/application/'
@@ -163,6 +166,8 @@ class ECP:
       return self.baseurl+'/deployment/'+name+'/destroylogs'
     elif resource == 'status':
       return self.baseurl+'/deployment/'+name+'/status'
+    elif resource == 'jointeam':
+      return self.baseurl+'/team/member'
 
     try:
       return self.baseurl+resourcepath+str(name)
@@ -283,7 +288,7 @@ def main(argv):
       return
 
   verbs = ['get','create','delete','stop','login']
-  resources = ['cred', 'creds', 'param','params','config','configs','app','apps','deployment','deployments','logs','destroylogs', 'status']
+  resources = ['cred', 'creds', 'param','params','config','configs', 'sharedconfig', 'app','apps','deployment','deployments','logs','destroylogs', 'status']
   if not args.verb in verbs:
     print('Unknown verb \''+args.verb+'\', expecting one of: get, create, delete, stop, login', file=sys.stderr)
     return
