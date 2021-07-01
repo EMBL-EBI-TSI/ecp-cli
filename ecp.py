@@ -9,15 +9,17 @@ import json
 import getpass
 import datetime
 import yaml
+import urllib3
 
 class ECP:
-  def __init__(self, tokenfile=None, baseurl='https://api.portal.tsi.ebi.ac.uk'):
+  def __init__(self, tokenfile=None, baseurl='https://dev.api.portal.tsi.ebi.ac.uk'):
     self.get_token(tokenfile)
     self.baseurl = baseurl
+    urllib3.disable_warnings()
 
   # gets new token from portal
   def aaplogin(self):
-    print('Please visit https://api.aai.ebi.ac.uk/sso and follow the login instructions')
+    print('Please visit https://dev.api.aai.ebi.ac.uk/sso and follow the login instructions')
     logged_in = False
     try:
       while not logged_in:
@@ -148,6 +150,7 @@ class ECP:
       print(row_format.format(*row, fill=col_width))
 
   def get_url(self, resource, name):
+    print("In get url", name)
     if resource == 'cred' or resource == 'creds':
       resourcepath = '/cloudproviderparameters/'
     elif resource == 'param' or resource == 'params':
@@ -160,6 +163,8 @@ class ECP:
       resourcepath = '/application/'
     elif resource == 'deployment' or resource == 'deployments':
       resourcepath = '/deployment/'
+    elif resource == 'deployment?teamname':
+      resourcepath = '/deployment?teamName='
     elif resource == 'logs':
       return self.baseurl+'/deployment/'+name+'/logs'
     elif resource == 'destroylogs':
@@ -170,6 +175,7 @@ class ECP:
       return self.baseurl+'/team/member'
 
     try:
+      print (self.baseurl+resourcepath+str(name))
       return self.baseurl+resourcepath+str(name)
     except UnboundLocalError:
       print('Unknown verb or resource, try --help for usage', file=sys.stderr)
@@ -191,17 +197,17 @@ class ECP:
     self.headers = {'Authorization': 'Bearer '+token, 'Content-Type': 'application/json'}
 
   def make_request(self, verb, resource, name, data=''):
-    if verb == 'create':
+    if verb == 'create' and resource != 'deployment?teamname':
       name = ''
     url = self.get_url(resource, name)
     if verb == 'get':
-      response = requests.get(url, headers=self.headers)
+      response = requests.get(url, headers=self.headers, verify=False)
     elif verb == 'create':
-        response = requests.post(url, headers=self.headers, data=data)
+        response = requests.post(url, headers=self.headers, data=data, verify=False)
     elif verb == 'delete':
-      response = requests.delete(url, headers=self.headers)
+      response = requests.delete(url, headers=self.headers, verify=False)
     elif verb == 'stop':
-      response = requests.put(url+'/stop', headers=self.headers)
+      response = requests.put(url+'/stop', headers=self.headers, verify=False)
     else:
       response = '{}'
       print('Unknown verb, try --help for usage')
@@ -235,7 +241,7 @@ class ECP:
 def main(argv):
   parser = argparse.ArgumentParser(description='EBI CLoud Portal CLI')
   parser.add_argument('verb', help='Action to perform on resource, one of: get/create/delete/stop(deployments only)/login')
-  parser.add_argument('resource', nargs='?', help='Resource type to perform action on, one of: cred/param/config/app/deployment/logs/status')
+  parser.add_argument('resource', nargs='?', help='Resource type to perform action on, one of: cred/param/config/app/deployment/deployment?teamname/logs/status')
   parser.add_argument('name', nargs='?', help='Resource name to perform action on; can be omitted for \'get\' action to list all', default='')
   parser.add_argument('--file', '-f', help='File containing JSON to post, use - for stdin')
   parser.add_argument('--token', '-t', help='File containing JWT identity token, is sourced from ECP_TOKEN env var by default')
@@ -250,7 +256,7 @@ def main(argv):
 
   args=parser.parse_args()
 
-  baseurl = 'https://api.portal.tsi.ebi.ac.uk'
+  baseurl = 'https://dev.api.portal.tsi.ebi.ac.uk'
   if args.dev:
     baseurl = 'https://dev.api.portal.tsi.ebi.ac.uk'
 
@@ -268,7 +274,7 @@ def main(argv):
 
   # convenience method
   # try name arg as file for create action if -f not given
-  if args.verb == 'create'and args.file is None:
+  if args.verb == 'create' and args.file is None:
     try:
       datafh = open(args.name, 'r')
       data = datafh.read()
@@ -288,7 +294,7 @@ def main(argv):
       return
 
   verbs = ['get','create','delete','stop','login']
-  resources = ['cred', 'creds', 'param','params','config','configs', 'sharedconfig', 'app','apps','deployment','deployments','logs','destroylogs', 'status']
+  resources = ['cred', 'creds', 'param','params','config','configs', 'sharedconfig', 'app','apps','deployment','deployments','logs','destroylogs', 'status', 'deployment?teamname']
   if not args.verb in verbs:
     print('Unknown verb \''+args.verb+'\', expecting one of: get, create, delete, stop, login', file=sys.stderr)
     return
@@ -298,11 +304,14 @@ def main(argv):
     args.name = args.resource
     args.resource = 'deployment'
 
+
   if not args.resource in resources:
     print('Unknown resource \''+str(args.resource)+'\', expecting one of: cred[s], param[s], config[s], app[s], deployment[s], [destroy]logs, status', file=sys.stderr)
     return
+  else:
+    print("Resource " + args.resource)
 
-
+  print(args.verb, args.resource, args.name)
   r = e.make_request(args.verb, args.resource, args.name, data=data)
   if r.status_code == 401:
     print('Got 401 unauthorized, please run \'ecp login\' to log in.')
